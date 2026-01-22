@@ -1,0 +1,10 @@
+{
+  "name": "Club Logos",
+  "description": "Logos des 60 clubs de football",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "created": "2026-01-22",
+  "total_clubs": 0,
+  "format": "Supports jpg, png, webp",
+  "notes": "Place your club logo files here (jpg, png, or webp)"
+}

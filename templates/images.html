@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}SoccerViz - Visualisation Images{% endblock %}
+
+{% block head %}
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Visualisation Images</h2>
+    </div>
+
+    <div class="container">
+        <section class="section">
+            <div id="logos-container">
+                <div style="text-align: center; padding: 3rem; color: #666;">
+                    <p>Chargement des données...</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/image_ui.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof initializeImages !== 'undefined') {
+            initializeImages();
+        }
+    });
+</script>
+{% endblock %}
+

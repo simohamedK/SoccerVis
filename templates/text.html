@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}SoccerViz - Visualisation Texte{% endblock %}
+
+{% block head %}
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- WordCloud2.js pour nuage de mots interactif -->
+    <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Visualisation Texte</h2>
+    </div>
+
+    <div class="container">
+        <section class="section">
+            <div id="articles-container"></div>
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/text_ui.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof initializeText !== 'undefined') {
+            initializeText();
+        }
+    });
+</script>
+{% endblock %}
+
