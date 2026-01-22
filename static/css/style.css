@@ -1771,3 +1771,34 @@ footer::before {
 ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(135deg, var(--field-green), var(--accent-color));
 }
+
+/* Carte interactive des nationalités */
+.nationality-map-section {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 25px;
+    margin: 20px 0;
+    box-shadow: var(--card-shadow);
+}
+
+.nationality-map-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.map-info {
+    color: var(--text-dark);
+    font-size: 14px;
+    margin-bottom: 15px;
+    opacity: 0.8;
+}
+
+#nationality-map {
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.map-legend {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}

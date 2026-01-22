@@ -20,6 +20,7 @@ function initializeCSV() {
     console.log('Initializing CSV UI');
     loadCSVStats();
     loadCSVColumns();
+    loadNationalityMap();
     // Les visualisations aléatoires seront chargées après l'affichage des contrôles
 }
 
@@ -1050,4 +1051,154 @@ function generateColors(count) {
         colors.push(`hsl(${hue}, 70%, 60%)`);
     }
     return colors;
+}
+
+// Carte interactive des nationalités
+let nationalityMap = null;
+
+function loadNationalityMap() {
+    fetch('/api/csv/nationality-map')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success' && data.map_data.points) {
+                displayNationalityMap(data.map_data);
+            }
+        })
+        .catch(error => console.error('Error loading nationality map:', error));
+}
+
+function displayNationalityMap(mapData) {
+    const container = document.getElementById('csv-container');
+    if (!container) return;
+    
+    // Créer la section de la carte
+    const mapSection = document.createElement('div');
+    mapSection.className = 'nationality-map-section';
+    mapSection.innerHTML = `
+        <h3>Carte Interactive des Nationalités</h3>
+        <p class="map-info">Total: ${mapData.total_players} joueurs de ${mapData.total_nations} nations</p>
+        <div id="nationality-map" style="height: 600px; width: 100%; border-radius: 8px; margin-top: 20px;"></div>
+    `;
+    
+    // Insérer la section après les statistiques
+    const statsSection = container.querySelector('.file-stats-section');
+    if (statsSection) {
+        statsSection.insertAdjacentElement('afterend', mapSection);
+    } else {
+        container.insertAdjacentElement('afterbegin', mapSection);
+    }
+    
+    // Initialiser la carte après un court délai pour s'assurer que le conteneur existe
+    setTimeout(() => {
+        initNationalityMap(mapData.points);
+    }, 100);
+}
+
+function initNationalityMap(points) {
+    const mapContainer = document.getElementById('nationality-map');
+    if (!mapContainer) return;
+    
+    // Détruire la carte existante si elle existe
+    if (nationalityMap) {
+        nationalityMap.remove();
+    }
+    
+    // Trouver les valeurs min et max pour la taille des bulles
+    const counts = points.map(p => p.count);
+    const minCount = Math.min(...counts);
+    const maxCount = Math.max(...counts);
+    
+    // Initialiser la carte Leaflet
+    nationalityMap = L.map('nationality-map').setView([20, 0], 2);
+    
+    // Ajouter la couche de tuiles OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(nationalityMap);
+    
+    // Fonction pour calculer la taille de la bulle basée sur le nombre de joueurs
+    function getBubbleSize(count) {
+        const minSize = 8;
+        const maxSize = 50;
+        if (maxCount === minCount) return (minSize + maxSize) / 2;
+        return minSize + ((count - minCount) / (maxCount - minCount)) * (maxSize - minSize);
+    }
+    
+    // Fonction pour obtenir la couleur basée sur le nombre de joueurs
+    function getBubbleColor(count) {
+        const ratio = (count - minCount) / (maxCount - minCount);
+        // Gradient de bleu clair à rouge foncé
+        const hue = 240 - (ratio * 120); // De bleu (240) à rouge (0)
+        return `hsl(${hue}, 70%, 50%)`;
+    }
+    
+    // Ajouter les marqueurs pour chaque pays
+    points.forEach(point => {
+        const bubbleSize = getBubbleSize(point.count);
+        const bubbleColor = getBubbleColor(point.count);
+        
+        // Créer un cercle personnalisé
+        const circle = L.circleMarker([point.lat, point.lng], {
+            radius: bubbleSize,
+            fillColor: bubbleColor,
+            color: '#fff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.7
+        }).addTo(nationalityMap);
+        
+        // Ajouter un popup avec les informations
+        const popupContent = `
+            <div style="text-align: center; padding: 5px;">
+                <strong>${point.nation}</strong><br>
+                <span style="font-size: 18px; color: ${bubbleColor}; font-weight: bold;">
+                    ${point.count} joueur${point.count > 1 ? 's' : ''}
+                </span>
+            </div>
+        `;
+        circle.bindPopup(popupContent);
+        
+        // Ajouter un événement hover pour mettre en évidence
+        circle.on('mouseover', function(e) {
+            this.setStyle({
+                fillOpacity: 0.9,
+                weight: 3
+            });
+        });
+        
+        circle.on('mouseout', function(e) {
+            this.setStyle({
+                fillOpacity: 0.7,
+                weight: 2
+            });
+        });
+    });
+    
+    // Ajouter une légende
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = function(map) {
+        const div = L.DomUtil.create('div', 'map-legend');
+        div.style.backgroundColor = 'white';
+        div.style.padding = '10px';
+        div.style.borderRadius = '5px';
+        div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+        div.innerHTML = `
+            <h4 style="margin: 0 0 10px 0; font-size: 14px;">Nombre de joueurs</h4>
+            <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                <div style="width: ${getBubbleSize(minCount)}px; height: ${getBubbleSize(minCount)}px; 
+                    background-color: ${getBubbleColor(minCount)}; border-radius: 50%; 
+                    border: 2px solid white; margin-right: 10px;"></div>
+                <span style="font-size: 12px;">${minCount}</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <div style="width: ${getBubbleSize(maxCount)}px; height: ${getBubbleSize(maxCount)}px; 
+                    background-color: ${getBubbleColor(maxCount)}; border-radius: 50%; 
+                    border: 2px solid white; margin-right: 10px;"></div>
+                <span style="font-size: 12px;">${maxCount}</span>
+            </div>
+        `;
+        return div;
+    };
+    legend.addTo(nationalityMap);
 }

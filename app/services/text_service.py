@@ -107,10 +107,26 @@ def get_word_frequencies(text, min_length=3, top_n=50):
     }
 
 def generate_wordcloud_data(text):
-    """Génère les données pour un nuage de mots"""
+    """Génère les données pour un nuage de mots avec filtrage des stop words"""
     cleaned_text = clean_text(text)
+    words = cleaned_text.split()
     
-    # Créer le WordCloud
+    # Utiliser la même logique de filtrage que get_word_frequencies
+    # Filtrer les mots courts (min_length=3, donc > 2 caractères) et les mots vides
+    stop_words = {'le', 'la', 'les', 'de', 'du', 'des', 'et', 'ou', 'un', 'une', 
+                  'est', 'sont', 'dans', 'pour', 'avec', 'par', 'sur', 'sous',
+                  'il', 'elle', 'ils', 'elles', 'ce', 'cette', 'ces', 'son', 'sa', 'ses',
+                  'que', 'qui', 'quoi', 'où', 'quand', 'comment', 'pourquoi',
+                  'être', 'avoir', 'faire', 'aller', 'venir', 'voir', 'dire',
+                  'mais', 'donc', 'car', 'ainsi', 'alors', 'aussi', 'bien', 'très'}
+    
+    # Filtrer les mots: longueur > 2 et pas de stop words
+    filtered_words = [w for w in words if len(w) > 2 and w not in stop_words]
+    
+    # Créer un texte filtré pour WordCloud
+    filtered_text = ' '.join(filtered_words)
+    
+    # Créer le WordCloud avec le texte filtré
     wordcloud = WordCloud(
         width=800,
         height=400,
@@ -118,7 +134,7 @@ def generate_wordcloud_data(text):
         max_words=100,
         relative_scaling=0.5,
         collocations=False
-    ).generate(cleaned_text)
+    ).generate(filtered_text)
     
     # Convertir en format JSON pour le frontend
     word_freq = wordcloud.words_

@@ -147,7 +147,7 @@ function displayTextAnalysis(analysis, filename) {
     // Attendre que le DOM soit mis à jour avant de créer les visualisations
     setTimeout(() => {
         createWordFrequencyChart(analysis.word_frequencies);
-        createWordCloud(analysis.wordcloud);
+        createWordCloud(analysis.wordcloud, analysis.word_frequencies);
     }, 100);
 }
 
@@ -185,7 +185,7 @@ function createWordFrequencyChart(wordFreq) {
     });
 }
 
-function createWordCloud(wordcloudData) {
+function createWordCloud(wordcloudData, wordFrequencies) {
     const container = document.getElementById('wordcloud-container');
     if (!container) return;
     
@@ -203,6 +203,14 @@ function createWordCloud(wordcloudData) {
     const words = wordcloudData.words;
     const frequencies = wordcloudData.frequencies;
     const maxFreq = wordcloudData.max_frequency;
+    
+    // Créer un mapping des mots vers leurs occurrences réelles depuis word_frequencies
+    const realOccurrences = {};
+    if (wordFrequencies && wordFrequencies.words && wordFrequencies.counts) {
+        for (let i = 0; i < wordFrequencies.words.length; i++) {
+            realOccurrences[wordFrequencies.words[i]] = wordFrequencies.counts[i];
+        }
+    }
     
     // Créer le tableau de mots avec leurs poids
     const wordList = words.slice(0, 100).map((word, index) => {
@@ -238,17 +246,15 @@ function createWordCloud(wordcloudData) {
             // Effet au survol
             if (item) {
                 canvas.style.cursor = 'pointer';
-                // Trouver le mot dans la liste pour afficher sa fréquence
-                const wordIndex = words.indexOf(item[0]);
-                if (wordIndex !== -1) {
-                    const freq = frequencies[wordIndex];
-                    const tooltip = document.getElementById('wordcloud-tooltip');
-                    if (tooltip) {
-                        tooltip.textContent = `${item[0]}: ${freq} occurrences`;
-                        tooltip.style.display = 'block';
-                        tooltip.style.left = (event.clientX + 10) + 'px';
-                        tooltip.style.top = (event.clientY + 10) + 'px';
-                    }
+                // Trouver le mot dans la liste pour afficher sa fréquence réelle
+                const word = item[0];
+                const realCount = realOccurrences[word] || 0;
+                const tooltip = document.getElementById('wordcloud-tooltip');
+                if (tooltip) {
+                    tooltip.textContent = `${word}: ${realCount} occurrence${realCount > 1 ? 's' : ''}`;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (event.clientX + 10) + 'px';
+                    tooltip.style.top = (event.clientY + 10) + 'px';
                 }
             } else {
                 canvas.style.cursor = 'default';
@@ -259,13 +265,13 @@ function createWordCloud(wordcloudData) {
             }
         },
         click: function(item) {
-            // Action au clic - afficher les détails du mot
+            // Action au clic - afficher les détails du mot avec occurrences réelles
             if (item) {
-                const wordIndex = words.indexOf(item[0]);
-                if (wordIndex !== -1) {
-                    const freq = frequencies[wordIndex];
-                    showWordDetails(item[0], freq, wordIndex);
-                }
+                const word = item[0];
+                const realCount = realOccurrences[word] || 0;
+                // Trouver le rang dans word_frequencies
+                const rank = wordFrequencies.words.indexOf(word);
+                showWordDetails(word, realCount, rank >= 0 ? rank : 0);
             }
         }
     };
